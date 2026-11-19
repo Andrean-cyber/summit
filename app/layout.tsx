@@ -1,33 +1,45 @@
 import type React from "react"
 import "@/app/globals.css"
-import { Inter } from "next/font/google"
+import { Plus_Jakarta_Sans } from "next/font/google"
 import { ThemeProvider } from "@/components/theme-provider"
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next"
 import Navbar from "@/components/sections/Navbar"
-import Footer from "@/components/sections/Footer" // Kita akan buat ini
-import Script from "next/script"
-import { cn } from "@/lib/utils";
+import Footer from "@/components/sections/Footer"
+import { cn } from "@/lib/utils"
 
+// Satu font untuk semua teks: Plus Jakarta Sans (variable font, weight 200-800).
+// Hierarki dibuat lewat tebal tipis: font-light untuk teks pendukung, font-extrabold untuk penekanan.
+const fontSans = Plus_Jakarta_Sans({
+  subsets: ["latin"],
+  variable: "--font-jakarta",
+  display: "swap",
+})
 
-const inter = Inter({ subsets: ["latin"] })
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  themeColor: "#1D363A",
+}
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://corestay.id"),
+  metadataBase: new URL("https://summit.id"),
 
   title: {
-    default: "CoreStay - Cluster Guest House di Malang",
-    template: "%s | CoreStay",
+    default: "Summit Private Village - Home Villa Tropical Modern di Malang",
+    template: "%s | Summit Private Village",
   },
 
   description:
-    "CoreStay adalah cluster guest house modern di Malang dengan fasilitas lengkap, lokasi strategis, dan lingkungan nyaman.",
+    "Summit Private Village adalah kawasan home villa tropical modern di Dau, Malang. Unit 2 lantai dengan 3 kamar tidur dan 2 kamar mandi, one gate system, resepsionis 24 jam. Harga mulai 800 jutaan.",
 
   keywords: [
-    "guest house malang",
-    "penginapan malang",
-    "cluster guest house",
-    "corestay",
-    "akomodasi malang",
+    "summit private village",
+    "villa malang",
+    "home villa malang",
+    "villa dau malang",
+    "investasi villa malang",
+    "rumah villa malang",
+    "summit.id",
   ],
 
   alternates: {
@@ -35,11 +47,11 @@ export const metadata: Metadata = {
   },
 
   openGraph: {
-    title: "CoreStay - Cluster Guest House di Malang",
+    title: "Summit Private Village - Home Villa Tropical Modern di Malang",
     description:
-      "Cluster guest house modern di Malang dengan fasilitas lengkap dan lokasi strategis.",
-    url: "https://corestay.id",
-    siteName: "CoreStay",
+      "Kawasan home villa tropical modern di Dau, Malang. 3 kamar tidur, 2 kamar mandi, one gate system, resepsionis 24 jam. Harga mulai 800 jutaan.",
+    url: "https://summit.id",
+    siteName: "Summit Private Village",
     locale: "id_ID",
     type: "website",
   },
@@ -52,7 +64,7 @@ export const metadata: Metadata = {
   icons: {
     icon: "/icon.ico",
   },
-};
+}
 
 export default function RootLayout({
   children,
@@ -60,18 +72,21 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <head />
-      {/* PERBAIKAN: Menambahkan antialiased untuk render font yang lebih bersih di mobile */}
-      <body className={cn(inter.className, "antialiased")}>
-        <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
-          {/* PERBAIKAN: Memastikan layout dasar flex-col mengunci luapan lebar */}
-          <div className={cn('flex', 'min-h-screen', 'flex-col', 'w-full', 'overflow-x-hidden')}>
+    <html lang="id" className={fontSans.variable} suppressHydrationWarning>
+      <body
+        className={cn(
+          "font-sans antialiased bg-white text-[#1D363A]"
+        )}
+      >
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="light"
+          enableSystem={false}
+          disableTransitionOnChange
+        >
+          <div className="flex min-h-screen w-full flex-col overflow-x-hidden">
             <Navbar />
-            {/* PERBAIKAN: Mengunci elemen main agar tidak ikut melar */}
-            <main className="flex-1 w-full max-w-full">
-              {children}
-            </main>
+            <main className="w-full max-w-full flex-1">{children}</main>
             <Footer />
           </div>
         </ThemeProvider>

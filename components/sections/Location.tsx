@@ -1,62 +1,53 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
-import Link from "next/link";
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
-import { MapPin, Mountain, TreePine, Navigation2, Sparkles } from "lucide-react";
+import Link from "next/link";
+import { MapPin, ShieldCheck, Clock, TreePine } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-const nearbyDestinations = [
-  {
-    name: "Lapangan Rampal Malang",
-    time: "2",
-    category: "Kesehatanan & Rekreasi",
-    icon: "🏛️",
-    image: "/rampal.jpg",
-  },
-  {
-    name: "Tugu Malang",
-    time: "3",
-    category: "Pusat Kota ",
-    icon: "🌿",
-    image: "/tugu.jpg",
-  },
-  {
-    name: "Kajoetangan Heritage",
-    time: "5",
-    category: "Destinasi Keluarga",
-    icon: "🎡",
-    image: "/kayutangan.jpg",
-  },
-  {
-    name: "Stasiun Malang Kota Baru",
-    time: "3",
-    category: "Perjalanan",
-    icon: "🚗",
-    image: "/stasiun.jpg",
-  },
+/**
+ * SKALA TIPOGRAFI (pakai kelas yang sama di semua section agar konsisten)
+ * Font: satu keluarga sans (Plus Jakarta Sans), hierarki lewat tebal tipis.
+ * - Judul section : text-3xl sm:text-4xl lg:text-5xl, kata kunci font-extrabold, sisanya font-light
+ * - Lead          : text-base md:text-lg font-light
+ * - Body          : text-base
+ * - Small         : text-sm
+ * - Caption       : text-xs
+ */
+
+const MAX_MINUTES = 10; // acuan panjang bar (tempuh terjauh = Jatim Park 3)
+
+type Place = {
+  name: string;
+  minutes: number;
+  group: "Pendidikan" | "Wisata";
+  image: string;
+};
+
+// Waktu tempuh diambil dari PDF Summit (urut dari terdekat).
+// Foto masih foto Corestay, ganti manual di folder /public.
+const places: Place[] = [
+  { name: "UIN Maulana Malik Ibrahim, Kampus 3", minutes: 3, group: "Pendidikan", image: "/uin.jfif" },
+  { name: "Ar-Rohmah Putri Islamic Boarding School", minutes: 3, group: "Pendidikan", image: "/arohmahI.jfif" },
+  { name: "Ar-Rohmah Putra Islamic Boarding School", minutes: 3, group: "Pendidikan", image: "/arohmahA.jfif" },
+  { name: "Thursina International Islamic Boarding School", minutes: 4, group: "Pendidikan", image: "/thursinah.jfif" },
+  { name: "Taman Rekreasi Sengkaling", minutes: 4, group: "Wisata", image: "/sengkaling.jfif" },
+  { name: "UMM Malang", minutes: 5, group: "Pendidikan", image: "/umm.jfif" },
+  { name: "Jatim Park 3", minutes: 10, group: "Wisata", image: "/jatimpark3.jfif" },
 ];
 
-const geoStrip = [
-  {
-    label: "Pegunungan Semeru - Kawi",
-    sub: "panorama dari rooftop",
-    Icon: Mountain,
-  },
-  {
-    label: "Akses tol langsung",
-    sub: "Exit TOL Malang",
-    Icon: Navigation2,
-  },
-  {
-    label: "Kawasan hijau",
-    sub: "60% tutupan vegetasi",
-    Icon: TreePine,
-  },
+const facts = [
+  { Icon: ShieldCheck, text: "One gate system" },
+  { Icon: Clock, text: "Resepsionis 24 jam" },
+  { Icon: TreePine, text: "Taman dan kawasan hijau" },
 ];
+
+const MAPS_QUERY = "3HG7+7W9 Dau Malang";
+const MAPS_LINK = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(MAPS_QUERY)}`;
+const MAPS_EMBED = `https://www.google.com/maps?q=${encodeURIComponent(MAPS_QUERY)}&output=embed`;
 
 export default function Location() {
-  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const [isVisible, setIsVisible] = useState(false);
   const sectionRef = useRef<HTMLElement>(null);
 
@@ -68,7 +59,7 @@ export default function Location() {
           observer.disconnect();
         }
       },
-      { threshold: 0.1 }
+      { threshold: 0.15 }
     );
     if (sectionRef.current) observer.observe(sectionRef.current);
     return () => observer.disconnect();
@@ -78,135 +69,120 @@ export default function Location() {
     <section
       id="location"
       ref={sectionRef}
-      className="bg-white py-16 md:py-24 px-4 md:px-8 lg:px-16 w-full overflow-hidden"
+      className="w-full overflow-hidden bg-[#1D363A] px-4 py-16 text-white md:px-8 md:py-24 lg:px-16"
     >
-      <div className="mx-auto w-full max-w-[1280px]">
-
-        {/* TOP GRID */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-14 items-start mb-12 lg:mb-14"> 
-
-
-        {/* ── HEADER ── */}
-        <div className={cn(
-          "mb-16 text-center transition-all duration-1000 ease-out",
-          isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"
-        )}>
-          <div className="inline-flex items-center gap-2 text-[#F26B1D] bg-[#F26B1D]/10 px-3.5 py-1.5 rounded-full mb-4 border border-[#F26B1D]/20">
-            <Sparkles size={12} className="animate-pulse" />
-            <span className="text-[10px] font-extrabold tracking-widest uppercase">strategic micro-location</span>
-          </div>
-          <h2 className="text-3xl md:text-5xl font-bold text-[#421E2C] tracking-tight leading-none">
-            Jantung <span className="text-[#F26B1D]">Kota Wisata</span> Malang
+      <div className="mx-auto grid w-full max-w-[1200px] gap-12 lg:grid-cols-12 lg:gap-14">
+        {/* KIRI: judul + daftar waktu tempuh */}
+        <div className="min-w-0 lg:col-span-7">
+          <h2 className="max-w-xl text-3xl leading-[1.15] tracking-tight sm:text-4xl lg:text-5xl">
+            <span className="font-extrabold text-[#FF5C0B]">Dau, Malang:</span>{" "}
+            <span className="font-light">dekat kampus, pesantren, dan tempat wisata keluarga</span>
           </h2>
-          <p className="text-zinc-500 font-light text-sm max-w-xl mx-auto mt-4 leading-relaxed">
-            Diposisikan di titik paling prestisius Kota Malang — Berada di jantung destinasi favorit, dikelilingi berbagai ikon wisata populer yang selalu ramai pengunjung, menciptakan okupansi tinggi dan peluang income yang terus mengalir.
+          <p className="mt-5 max-w-xl text-base font-light leading-relaxed text-white/70 md:text-lg">
+            Semua tujuan di bawah bisa dicapai dalam{" "}
+            <span className="font-semibold text-white">3 sampai 10 menit</span>. Kawasan yang
+            selalu ramai oleh mahasiswa, wali santri, dan wisatawan ini menjaga permintaan sewa
+            tetap hidup sepanjang tahun.
           </p>
-        </div>
 
-          {/* RIGHT CARD */}
-          <div
-            className={cn(
-              "transition-all duration-1000 delay-200 ease-out",
-              isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
-            )}
-          >
-            <div className="relative bg-[#421E2C] rounded-2xl p-7 overflow-hidden">
-              <p className="text-[10px] tracking-widest uppercase text-white/35 font-medium mb-1.5">
-                Koordinat GPS
-              </p>
-              {/* Teks koordinat visual disesuaikan dengan posisi presisi dari iframe Core Stay */}
-              <p className="text-xl font-light tracking-wide text-[#F9F0EF] mb-1 font-mono">
-                7°58’40"S  112°38’55"E
-              </p>
-              <p className="font-serif italic text-[#F26B1D] text-base mb-6">
-                Core Stay
-              </p>
-
-              {/* Tautan eksternal yang mengarah ke link maps yang Anda berikan sebelumnya */}
-              <Link
-                href="https://maps.app.goo.gl/ayvzfsvKwSFoUAoo6"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center justify-between bg-[#F26B1D] hover:bg-[#E05C0E] transition-colors rounded-xl px-4 py-3.5"
-              >
-                <span className="text-sm font-medium text-white">
-                  Buka di Google Maps
-                </span>
-                <MapPin size={16} className="text-white" />
-              </Link>
-            </div>
+          {/* Legenda warna bar */}
+          <div className="mt-8 flex items-center gap-6 text-sm font-medium text-white/70">
+            <span className="flex items-center gap-2">
+              <span className="h-2 w-6 rounded-full bg-white" /> Pendidikan
+            </span>
+            <span className="flex items-center gap-2">
+              <span className="h-2 w-6 rounded-full bg-[#FF5C0B]" /> Wisata
+            </span>
           </div>
-        </div>
 
-        {/* DESTINATION GRID WITH IMAGES */}
-        <div
-          className={cn(
-            "transition-all duration-1000 delay-300 ease-out",
-            isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
-          )}
-        >
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-            {nearbyDestinations.map((spot, idx) => (
-              <div
-                key={idx}
-                onMouseEnter={() => setHoveredIndex(idx)}
-                onMouseLeave={() => setHoveredIndex(null)}
-                className="group relative rounded-2xl overflow-hidden border border-[#F2EDE9]"
+          <ul className="mt-4 divide-y divide-white/10 border-y border-white/10">
+            {places.map((place) => (
+              <li
+                key={place.name}
+                className="grid grid-cols-[56px_1fr_auto] items-center gap-4 py-4 md:grid-cols-[72px_1fr_auto] md:gap-5"
               >
-                {/* IMAGE */}
-                <div className="relative h-48 w-full">
+                <div className="relative h-14 w-14 overflow-hidden rounded-lg bg-white/10 md:h-[72px] md:w-[72px]">
                   <Image
-                    src={spot.image}
-                    alt={spot.name}
+                    src={place.image}
+                    alt={place.name}
                     fill
-                    className="object-cover transition-transform duration-700 group-hover:scale-110"
+                    sizes="72px"
+                    className="object-cover"
                   />
                 </div>
 
-                {/* OVERLAY */}
-                <div
-                  className={cn(
-                    "absolute inset-0 bg-gradient-to-t from-[#421E2C]/90 via-[#421E2C]/50 to-transparent transition-opacity duration-500",
-                    hoveredIndex === idx ? "opacity-100" : "opacity-80"
-                  )}
-                />
-
-                {/* CONTENT */}
-                <div className="absolute bottom-0 p-5 text-white z-10">
-                  <p className="text-[10px] tracking-widest uppercase text-white/60 mb-1">
-                    {spot.category}
-                  </p>
-                  <p className="text-sm font-medium leading-snug mb-3">
-                    {spot.name}
-                  </p>
-
-                  <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur px-3 py-1.5 rounded-lg text-xs">
-                    <span className="text-sm font-semibold">{spot.time}</span>
-                    <span className="text-[10px] uppercase tracking-wide">
-                      menit
-                    </span>
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold leading-snug md:text-base">{place.name}</p>
+                  <div className="mt-2.5 h-1.5 w-full rounded-full bg-white/10">
+                    <div
+                      className={cn(
+                        "h-full rounded-full transition-[width] duration-1000 ease-out motion-reduce:transition-none",
+                        place.group === "Wisata" ? "bg-[#FF5C0B]" : "bg-white"
+                      )}
+                      style={{
+                        width: isVisible ? `${(place.minutes / MAX_MINUTES) * 100}%` : "0%",
+                      }}
+                    />
                   </div>
                 </div>
-              </div>
+
+                <p className="text-right text-3xl font-extrabold leading-none tracking-tight tabular-nums md:text-4xl">
+                  {place.minutes}
+                  <span className="ml-1 text-xs font-light tracking-normal text-white/60">
+                    menit
+                  </span>
+                </p>
+              </li>
             ))}
+          </ul>
+        </div>
+
+        {/* KANAN: peta */}
+        <div className="min-w-0 lg:col-span-5">
+          <div className="lg:sticky lg:top-24">
+            <div className="overflow-hidden rounded-2xl border border-white/15 bg-white/5">
+              <iframe
+                title="Lokasi Summit Private Village"
+                src={MAPS_EMBED}
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+                className="h-72 w-full border-0 md:h-96"
+              />
+              <div className="space-y-4 p-5 md:p-6">
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/50">
+                    Alamat
+                  </p>
+                  <p className="mt-1 text-base font-bold">Dau, Malang, Jawa Timur</p>
+                  <p className="mt-0.5 text-sm font-light text-white/60">
+                    Plus code {MAPS_QUERY.split(" ")[0]}
+                  </p>
+                </div>
+                <Link
+                  href={MAPS_LINK}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-center gap-2 rounded-xl bg-[#FF5C0B] px-4 py-3.5 text-sm font-bold text-white transition-colors hover:bg-[#e65209] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white md:text-base"
+                >
+                  <MapPin size={18} />
+                  Buka di Google Maps
+                </Link>
+              </div>
+            </div>
+
+            <ul className="mt-6 flex flex-wrap gap-x-6 gap-y-3">
+              {facts.map(({ Icon, text }) => (
+                <li
+                  key={text}
+                  className="flex items-center gap-2 text-sm font-medium text-white/80"
+                >
+                  <Icon size={16} className="text-[#FF5C0B]" />
+                  {text}
+                </li>
+              ))}
+            </ul>
           </div>
         </div>
-
-        {/* GEO STRIP */}
-        <div className="border-t border-[#F2EDE9] mt-12 pt-6 flex flex-wrap gap-6 lg:gap-10">
-          {geoStrip.map(({ label, sub, Icon }, i) => (
-            <div key={i} className="flex items-center gap-2.5">
-              <Icon size={15} className="text-[#C0A8B0]" />
-              <span className="text-[11px] text-[#9B7D88]">
-                <strong className="text-[#421E2C] font-medium">
-                  {label}
-                </strong>{" "}
-                — {sub}
-              </span>
-            </div>
-          ))}
-        </div>
-
       </div>
     </section>
   );

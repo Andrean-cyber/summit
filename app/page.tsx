@@ -2,7 +2,6 @@ import Hero from "@/components/sections/Hero";
 import UnitDetail from "@/components/sections/UnitDetail";
 import PassiveIncome from "@/components/sections/PassiveIncome";
 import Location from "@/components/sections/Location";
-import VideoReview from "@/components/sections/VideoReview";
 import Pricing from "@/components/sections/Pricing";
 import Survey from "@/components/sections/Survey";     
 import Testimonials from "@/components/sections/Testimonials";   
@@ -16,7 +15,6 @@ export default function Home() {
       <UnitDetail />
       <PassiveIncome />
       <Location />
-      <VideoReview />
       <Pricing />
       <Survey />
       <Testimonials />

@@ -1,251 +1,180 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
+import { X, ZoomIn, MessageCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Sparkles, MapPin, ArrowRight, ArrowUpRight, X, ZoomIn } from "lucide-react";
+
+/**
+ * SKALA TIPOGRAFI (sama di semua section)
+ * Satu keluarga font sans (font-sans), hierarki dari tebal-tipis:
+ * Judul section: text-3xl md:text-4xl lg:text-5xl font-light tracking-tight (kata kunci font-semibold)
+ * Judul kecil: text-xl font-medium | Lead: text-base md:text-lg font-light
+ * Body: text-base font-normal | Small: text-sm font-light | Caption: text-xs
+ */
+
+const WA_URL = `https://wa.me/62816500340?text=${encodeURIComponent(
+  "Halo Summit Private Village, saya ingin menjadwalkan survey ke lokasi."
+)}`;
+
+// Foto berisi dokumentasi kunjungan pembeli dan unit terjual.
+// Keterangan disesuaikan dengan isi foto; ubah bila foto penggantinya berbeda.
+const spots = [
+  {
+    title: "Unit blok terjual",
+    desc: "Pembeli yang survey langsung lalu mengamankan unitnya.",
+    image: "/survy1.webp",
+  },
+  {
+    title: "Kunjungan pembeli",
+    desc: "Survey ke lokasi bersama tim Summit Private Village.",
+    image: "/survy2.webp",
+  },
+  {
+    title: "Unit blok terjual",
+    desc: "Dokumentasi serah terima dengan pembeli di lokasi.",
+    image: "/survy3.webp",
+  },
+  {
+    title: "Kunjungan pembeli",
+    desc: "Calon pembeli melihat unit dan kawasan secara langsung.",
+    image: "/survy4.webp",
+  },
+];
 
 export default function Survey() {
-  const [isVisible, setIsVisible] = useState(false);
-  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
-  // State baru untuk menangani preview gambar yang sedang dibuka
-  const [activeImage, setActiveImage] = useState<{ src: string; title: string } | null>(null);
-  const sectionRef = useRef<HTMLElement>(null);
+  const [active, setActive] = useState<{ src: string; title: string } | null>(null);
+  const closeBtnRef = useRef<HTMLButtonElement>(null);
+  const lastTriggerRef = useRef<HTMLElement | null>(null);
 
-  const surveyGalleries = [
-    {
-      id: "01",
-      title: "Family Private Gathering Tour",
-      visitor: "Keluarga Bp. Hendra",
-      origin: "Surabaya",
-      image: "/srvy1.webp",
-    },
-    {
-      id: "02",
-      title: "Investor Executive Briefing",
-      visitor: "Ibu Citra & Rekan",
-      origin: "Jakarta Pusat",
-      image: "/srvy2.webp",
-    },
-    {
-      id: "03",
-      title: "Weekend Site Inspection",
-      visitor: "Dr. Aditya",
-      origin: "Malang",
-      image: "/srvy3.webp",
-    },
-    {
-      id: "04",
-      title: "VIP Booking Deal Survey",
-      visitor: "Bp. Ronald & Istri",
-      origin: "Sidoarjo",
-      image: "/srvy4.webp",
-    },
-  ];
-
+  // Kunci scroll, tutup dengan Escape, fokus ke tombol tutup, lalu kembalikan fokus.
   useEffect(() => {
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setIsVisible(true);
-          observer.disconnect();
-        }
-      },
-      { threshold: 0.1 }
-    );
-    if (sectionRef.current) observer.observe(sectionRef.current);
-    return () => observer.disconnect();
-  }, []);
+    if (!active) return;
+    document.body.style.overflow = "hidden";
+    closeBtnRef.current?.focus();
 
-  // Mencegah scroll pada body saat modal preview terbuka
-  useEffect(() => {
-    if (activeImage) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "";
-    }
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setActive(null);
+    };
+    window.addEventListener("keydown", onKey);
+
     return () => {
       document.body.style.overflow = "";
+      window.removeEventListener("keydown", onKey);
+      lastTriggerRef.current?.focus();
     };
-  }, [activeImage]);
+  }, [active]);
 
   return (
-    <section 
-      id="survey" 
-      ref={sectionRef}
-      className="bg-white py-20 md:py-32 px-4 md:px-8 lg:px-16 w-full relative overflow-hidden border-t border-zinc-100"
+    <section
+      id="survey"
+      className="w-full overflow-hidden bg-white px-4 py-16 md:px-8 md:py-24 lg:px-16"
     >
-      <div className="mx-auto w-full max-w-[1200px]">
-        
-        {/* ── HEADER ── */}
-        <div className={cn(
-          "mb-16 text-center transition-all duration-1000 ease-out",
-          isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"
-        )}>
-          <div className="inline-flex items-center gap-2 text-[#F26B1D] bg-[#F26B1D]/10 px-3.5 py-1.5 rounded-full mb-4 border border-[#F26B1D]/20">
-            <Sparkles size={12} className="animate-pulse" />
-            <span className="text-[10px] font-extrabold tracking-widest uppercase">On-Site Realtime Journal</span>
+      <div className="mx-auto grid w-full max-w-[1200px] gap-12 lg:grid-cols-12 lg:gap-16">
+        {/* KIRI: ajakan survey */}
+        <div className="lg:col-span-5">
+          <div className="lg:sticky lg:top-28">
+            <h2 className="text-3xl font-light leading-tight tracking-tight text-[#1D363A] md:text-4xl lg:text-5xl">
+              Lihat <span className="font-semibold">langsung</span> sebelum memutuskan
+            </h2>
+            <p className="mt-5 text-base font-light leading-relaxed text-[#1D363A]/70 md:text-lg">
+              Banyak pembeli memutuskan setelah datang langsung ke Summit Private Village di
+              Dau, Malang. Jadwalkan survey untuk melihat unit, kawasan dengan one gate
+              system, dan lingkungan sekitarnya dengan mata sendiri.
+            </p>
+
+            <a
+              href={WA_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-8 inline-flex items-center gap-2 rounded-xl bg-[#FF5C0B] px-6 py-4 text-base font-semibold text-white transition-colors hover:bg-[#e65209] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1D363A]"
+            >
+              <MessageCircle size={18} />
+              Jadwalkan survey
+            </a>
+            <p className="mt-3 text-sm font-light text-[#1D363A]/60">
+              Balasan lewat WhatsApp <span className="font-medium">0816 500 340</span>.
+            </p>
           </div>
-          <h2 className="text-3xl md:text-5xl font-bold text-[#421E2C] tracking-tight leading-none">
-            Dokumentasi <span className="text-[#F26B1D]">Kunjungan Lapangan</span>
-          </h2>
         </div>
 
-        {/* ========================================================= */}
-        {/* BAUHAUS ROW STRIP LAYOUT (Pasti Rapi & Simetris)          */}
-        {/* ========================================================= */}
-        <div className={cn(
-          "border-t border-zinc-200 divide-y divide-zinc-200 transition-all duration-1000 delay-200",
-          isVisible ? "opacity-100" : "opacity-0"
-        )}>
-          {surveyGalleries.map((item, index) => {
-            const isHovered = hoveredIndex === index;
-            
-            return (
-              <div
-                key={index}
-                onMouseEnter={() => setHoveredIndex(index)}
-                onMouseLeave={() => setHoveredIndex(null)}
-                onClick={() => setActiveImage({ src: item.image, title: item.title })}
-                className="py-6 md:py-10 grid grid-cols-1 md:grid-cols-12 gap-6 items-center relative group transition-colors duration-300 hover:bg-zinc-50/50 px-4 -mx-4 rounded-lg cursor-pointer"
+        {/* KANAN: galeri 2 kolom, kolom kanan sedikit turun */}
+        <ul className="grid gap-4 sm:grid-cols-2 sm:pb-12 lg:col-span-7 lg:gap-5">
+          {spots.map((spot, i) => (
+            <li key={`${spot.image}-${i}`} className={cn(i % 2 === 1 && "sm:mt-12")}>
+              <button
+                type="button"
+                onClick={(e) => {
+                  lastTriggerRef.current = e.currentTarget;
+                  setActive({ src: spot.image, title: spot.title });
+                }}
+                aria-label={`Perbesar foto: ${spot.title}`}
+                className="group block w-full overflow-hidden rounded-2xl bg-[#1D363A] text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#FF5C0B]"
               >
-                {/* Col 1: Index Number */}
-                <div className="md:col-span-1">
-                  <span className={cn(
-                    "text-xs font-mono font-bold tracking-wider transition-colors duration-300",
-                    isHovered ? "text-[#F26B1D]" : "text-zinc-400"
-                  )}>
-                    {item.id}
+                <div className="relative aspect-[4/5] w-full overflow-hidden">
+                  <Image
+                    src={spot.image}
+                    alt={spot.title}
+                    fill
+                    sizes="(min-width: 1024px) 340px, (min-width: 640px) 45vw, 100vw"
+                    className="object-cover transition-transform duration-700 group-hover:scale-105 motion-reduce:transition-none"
+                  />
+                  <span className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-white/90 text-[#1D363A]">
+                    <ZoomIn size={16} />
                   </span>
                 </div>
-
-                {/* Col 2: Title & Location Tag */}
-                <div className="md:col-span-4 space-y-1">
-                  <h3 className="text-base md:text-lg font-bold text-[#421E2C] tracking-tight">
-                    {item.title}
-                  </h3>
-                  <div className="flex items-center gap-1.5 text-[10px] text-zinc-400">
-                    <MapPin size={10} className="text-[#F26B1D]" />
-                    <span className="font-medium uppercase tracking-wider">Polehan, Kec. Blimbing</span>
-                  </div>
+                <div className="p-5">
+                  <p className="text-xl font-medium tracking-tight text-white">{spot.title}</p>
+                  <p className="mt-1 text-sm font-light text-white/70">{spot.desc}</p>
                 </div>
-
-                {/* Col 3: Visitor Detail */}
-                <div className="md:col-span-3">
-                  <p className="text-sm text-zinc-600 font-light">
-                    {item.visitor}
-                  </p>
-                  <p className="text-[11px] text-zinc-400 italic">
-                    Asal: {item.origin}
-                  </p>
-                </div>
-
-                {/* Col 4: Interactive Image Frame Pop-up */}
-                <div className="md:col-span-3 flex justify-start md:justify-center relative">
-                  <div className={cn(
-                    "relative w-28 h-16 md:w-36 md:h-20 rounded-lg overflow-hidden border border-zinc-200 shadow-sm transition-all duration-500 ease-out origin-center md:absolute md:-top-10 z-20 pointer-events-none group-hover:border-[#F26B1D]/40",
-                    isHovered 
-                      ? "md:scale-150 md:shadow-xl md:border-[#421E2C]/20 opacity-100" 
-                      : "md:opacity-40 md:scale-100"
-                  )}>
-                    <Image
-                      src={item.image}
-                      alt={item.title}
-                      fill
-                      sizes="144px"
-                      className="object-cover"
-                    />
-                    
-                    {/* Hover Overlay Zoom Icon */}
-                    <div className={cn(
-                      "absolute inset-0 bg-black/30 flex items-center justify-center text-white opacity-0 transition-opacity duration-300",
-                      isHovered && "opacity-100"
-                    )}>
-                      <ZoomIn size={16} className="animate-pulse" />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Col 5: Arrow Trigger */}
-                <div className="md:col-span-1 flex justify-end">
-                  <div className={cn(
-                    "w-8 h-8 rounded-full border flex items-center justify-center transition-all duration-300",
-                    isHovered 
-                      ? "bg-[#421E2C] border-[#421E2C] text-white rotate-45" 
-                      : "bg-white border-zinc-200 text-zinc-400"
-                  )}>
-                    <ArrowUpRight size={14} />
-                  </div>
-                </div>
-
-              </div>
-            );
-          })}
-        </div>
-
-        {/* ========================================================= */}
-        {/* BOTTOM MINIMALIST ACTION CALLOUT                          */}
-        {/* ========================================================= */}
-        <div className={cn(
-          "mt-16 pt-8 border-t border-zinc-200 flex flex-col sm:flex-row items-center justify-between gap-6 transition-all duration-1000 delay-500",
-          isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"
-        )}>
-          <a 
-            href="https://wa.me/62816500707"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="group flex items-center gap-2 bg-[#421E2C] hover:bg-[#F26B1D] text-white text-xs font-bold tracking-wider uppercase px-6 py-3.5 rounded transition-all duration-300 shrink-0 shadow-sm"
-          >
-            <span>Request VIP Survey</span>
-            <ArrowRight size={12} className="transition-transform group-hover:translate-x-1" />
-          </a>
-        </div>
-
+              </button>
+            </li>
+          ))}
+        </ul>
       </div>
 
-      {/* ========================================================= */}
-      {/* LIGHTBOX MODAL DIALOG PREVIEW CONTAINER                  */}
-      {/* ========================================================= */}
-      {activeImage && (
-        <div 
-          className="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex flex-col items-center justify-center p-4 transition-all duration-500 animate-in fade-in"
-          onClick={() => setActiveImage(null)}
+      {/* LIGHTBOX */}
+      {active && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label={active.title}
+          className="fixed inset-0 z-[70] flex flex-col items-center justify-center bg-black/85 p-4 backdrop-blur-sm"
+          onClick={() => setActive(null)}
         >
-          {/* Close Button Top-Right */}
-          <button 
-            className="absolute top-6 right-6 text-white/70 hover:text-white bg-white/10 p-2.5 rounded-full backdrop-blur transition-colors cursor-pointer"
-            onClick={() => setActiveImage(null)}
+          <button
+            ref={closeBtnRef}
+            type="button"
+            onClick={() => setActive(null)}
+            aria-label="Tutup foto"
+            className="absolute right-4 top-4 rounded-full bg-white/10 p-3 text-white transition-colors hover:bg-white/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#FF5C0B] md:right-6 md:top-6"
           >
-            <X size={20} />
+            <X size={22} />
           </button>
 
-          {/* Image Canvas Box */}
-          <div 
-            className="relative w-full max-w-4xl h-[60vh] md:h-[75vh] rounded-2xl overflow-hidden shadow-2xl border border-white/10"
-            onClick={(e) => e.stopPropagation()} // Mencegah penutupan modal saat mengklik area dalam gambar
+          <div
+            className="relative h-[65vh] w-full max-w-4xl overflow-hidden rounded-2xl md:h-[75vh]"
+            onClick={(e) => e.stopPropagation()}
           >
             <Image
-              src={activeImage.src}
-              alt={activeImage.title}
+              src={active.src}
+              alt={active.title}
               fill
+              sizes="(min-width: 1024px) 896px, 100vw"
               className="object-contain"
-              quality={95}
+              quality={90}
               priority
             />
           </div>
 
-          {/* Bottom Title Label Context */}
-          <div className="text-center mt-4 max-w-xl animate-in slide-in-from-bottom-3 duration-300">
-            <p className="text-white font-semibold text-sm md:text-base tracking-wide">
-              {activeImage.title}
-            </p>
-            <p className="text-zinc-400 text-xs mt-1">
-              Klik di mana saja pada area gelap untuk kembali ke halaman utama.
-            </p>
-          </div>
+          <p className="mt-4 text-center text-xl font-medium tracking-tight text-white">
+            {active.title}
+          </p>
+          <p className="mt-1 text-sm font-light text-white/60">
+            Tekan Esc atau klik area gelap untuk menutup.
+          </p>
         </div>
       )}
-
     </section>
   );
 }

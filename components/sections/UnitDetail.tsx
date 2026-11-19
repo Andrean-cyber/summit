@@ -4,123 +4,135 @@ import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
 import {
-  Layers,
   Maximize2,
+  Layers,
+  Building2,
   BedDouble,
   Bath,
   Flower2,
   Car,
-  FileText,
-  Layers2,
-  ArrowRight,
-  ShieldCheck,
+  DoorOpen,
+  Clock,
+  Lightbulb,
   MapPin,
-  FileBadge,
-  Sparkles,
+  ArrowRight,
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
 
+const WA_URL =
+  "https://wa.me/62816500340?text=Halo%2C%20saya%20ingin%20info%20harga%20dan%20unit%20Summit%20Private%20Village.";
+
 /* ─────────────────────────────────────────────
-   DATA
+   DATA (sumber: PDF Product Knowledge Summit)
 ───────────────────────────────────────────── */
 const TABS = [
-  { id: "spec", label: "Spesifikasi" },
+  { id: "unit", label: "Unit" },
+  { id: "tech", label: "Spesifikasi Teknis" },
   { id: "facility", label: "Fasilitas" },
 ] as const;
 
 type TabId = (typeof TABS)[number]["id"];
 
-const CONTENT: Record<
-  TabId,
-  {
-    images: string[];
-    eyebrow: string;
-    heading: string;
-    body: string;
-    rows: { icon: React.ReactNode; label: string; value: string }[];
-  }
-> = {
-  spec: {
-    // Ganti / tambah path foto fasad di sini. Urutan = urutan slide.
+type Row = { icon?: React.ReactNode; label: string; value: string };
+
+type TabContent = {
+  images: string[];
+  eyebrow: string;
+  heading: string;
+  body: string;
+  variant: "cards" | "list";
+  rows: Row[];
+};
+
+const CONTENT: Record<TabId, TabContent> = {
+  unit: {
+    // Ganti / tambah path foto di sini. Urutan = urutan slide.
     images: [
-      "/fasad_depan (1).webp",
-      "/int1.webp",
-      "/int2.webp",
-      "/int3.webp",
-      "/int4.webp",
-      "/int5.webp",
-      "/int6.webp",
-      "/int7.webp",
-      "/int8.webp",
-      "/int9.webp",
+      "/hero1.webp",
+      "/inte1.webp",
+      "/inte2.webp",
+      "/inte3.webp",
+
     ],
-    eyebrow: "Exclusive Guest House",
-    heading: "Ruang yang dirancang untuk kebutuhan \nlebih baik di masa mendatang.",
-    body: "Lobby/recepsionist dan tempat parkir yang luas, cocok untuk keluarga yang menginginkan kenyamanan premium tanpa kompromi.",
+    eyebrow: "Summit Type 75",
+    heading: "Hunian dua lantai dengan\ntiga kamar tidur.",
+    body: "Home villa bergaya tropical modern dengan taman, carport, dan tata ruang yang efisien di setiap lantainya.",
+    variant: "cards",
     rows: [
-      { icon: <Maximize2 size={16} />, label: "Luas Tanah", value: "108 m²" },
-      {
-        icon: <Layers size={16} />,
-        label: "Luas Bangunan",
-        value: "255 m²",
-      },
-      {
-        icon: <BedDouble size={16} />,
-        label: "Kamar Tidur",
-        value: "10 Master Bedrooms",
-      },
-      {
-        icon: <Bath size={16} />,
-        label: "Kamar Mandi",
-        value: "11 Bathrooms",
-      },
+      { icon: <Maximize2 size={16} />, label: "Luas Tanah", value: "74 m²" },
+      { icon: <Layers size={16} />, label: "Luas Bangunan", value: "75 m²" },
+      { icon: <Building2 size={16} />, label: "Jumlah Lantai", value: "2 Lantai" },
+      { icon: <BedDouble size={16} />, label: "Kamar Tidur", value: "3 Kamar" },
+      { icon: <Bath size={16} />, label: "Kamar Mandi", value: "2 Kamar" },
+      { icon: <Flower2 size={16} />, label: "Taman", value: "1 Garden" },
+    ],
+  },
+  tech: {
+    images: ["/fsd.webp"],
+    eyebrow: "Spesifikasi Teknis",
+    heading: "Material dan perlengkapan\nyang digunakan.",
+    body: "Rincian struktur, finishing, dan perlengkapan unit Summit Type 75.",
+    variant: "list",
+    rows: [
+      { label: "Pondasi", value: "Footplat" },
+      { label: "Struktur", value: "Beton Bertulang" },
+      { label: "Dinding", value: "Bata Ringan (Hebel)" },
+      { label: "Lantai", value: "Granite 60×60" },
+      { label: "Penutup Atap", value: "Dak Rooftop" },
+      { label: "Rangka Plafond", value: "Metal Hollow" },
+      { label: "Penutup Plafond", value: "Gypsumboard & GRC Board" },
+      { label: "Kusen", value: "Aluminium Inkalum" },
+      { label: "Pintu", value: "Solid Engineering" },
+      { label: "Jendela", value: "Aluminium Inkalum" },
+      { label: "Cat", value: "Jotun" },
+      { label: "Railing Tangga", value: "Besi Hollow" },
+      { label: "Railing Balkon", value: "Tempered Glass" },
+      { label: "Sanitary", value: "Closed Duduk American Standard" },
+      { label: "Air Bersih", value: "PDAM" },
+      { label: "Listrik", value: "1300 Watt" },
+      { label: "Lighting", value: "Smart Lamp" },
+      { label: "Doorlock", value: "Smart Doorlock" },
+      { label: "Carport", value: "Batu Andesit" },
     ],
   },
   facility: {
-    images: ["/interior (1).webp"],
-    eyebrow: "Fasilitas Internal Premium",
-    heading: "Kenyamanan resor\ndari dalam.",
-    body: "Setiap fasilitas dipilih untuk menghadirkan pengalaman tinggal setara bintang lima.",
+    images: ["/oneGate.webp"],
+    eyebrow: "Fasilitas Kawasan",
+    heading: "Keamanan dan kenyamanan\nsepanjang waktu.",
+    body: "Akses satu pintu dan resepsionis yang siaga 24 jam untuk penghuni dan tamu.",
+    variant: "cards",
     rows: [
-      {
-        icon: <Car size={16} />,
-        label: "Area Parkir",
-        value: "2 Mobil + 10 Motor",
-      },
-      {
-        icon: <Flower2 size={16} />,
-        label: "Taman Privat",
-        value: "Space Exclusive",
-      },
+      { icon: <DoorOpen size={16} />, label: "Keamanan", value: "One Gate System" },
+      { icon: <Clock size={16} />, label: "Resepsionis", value: "24 Jam" },
+      { icon: <Car size={16} />, label: "Parkir per Unit", value: "1 Mobil + 1 Motor" },
+      { icon: <Lightbulb size={16} />, label: "Smart Home", value: "Smart Lamp & Doorlock" },
+      { icon: <Flower2 size={16} />, label: "Taman Kawasan", value: "Area taman di pintu masuk" },
     ],
   },
 };
 
 const PERKS = [
   {
-    icon: <MapPin size={15} />,
-    label: "Pusat Kota Malang",
-    desc: "Hitungan menit ke pusat kota, sekolah, dan rumah sakit",
+    icon: <MapPin size={18} />,
+    label: "Dau, Malang",
+    desc: "3 menit ke UIN Maulana Malik Ibrahim Kampus 3",
     href: "#location",
   },
   {
-    icon: <FileText size={15} />,
-    label: "Legalitas 100% Aman",
-    desc: "Dokumen dan perizinan lengkap, siap transaksi dengan aman",
-    href: "#pricing",
+    icon: <DoorOpen size={18} />,
+    label: "One Gate System",
+    desc: "Akses satu pintu kawasan",
   },
   {
-    icon: <Layers2 size={15} />,
-    label: "Full Furnished",
-    desc: "Interior premium lengkap, siap huni atau langsung menghasilkan pasif income",
-     href: "#explore",
+    icon: <Clock size={18} />,
+    label: "Resepsionis 24 Jam",
+    desc: "Siaga sepanjang hari",
   },
   {
-    icon: <FileBadge size={15} />,
-    label: "Support Management",
-    desc: "Dikelola oleh tim profesional, optimalkan keuntungan tanpa repot mengurus operasional harian",
-    href: "#investasi",
+    icon: <Building2 size={18} />,
+    label: "Dikembangkan SAN Group",
+    desc: "PT. Skala Asta Nirwana",
   },
 ];
 
@@ -128,29 +140,30 @@ const PERKS = [
    COMPONENT
 ───────────────────────────────────────────── */
 export default function UnitDetail() {
-  const [activeTab, setActiveTab] = useState<TabId>("spec");
+  const [activeTab, setActiveTab] = useState<TabId>("unit");
   const [isVisible, setIsVisible] = useState(false);
-  const [hasAnimated, setHasAnimated] = useState(false);
-  const sectionRef = useRef<HTMLDivElement>(null);
+  const sectionRef = useRef<HTMLElement>(null);
 
-  // ── Carousel state ──
+  // Carousel state
   const [slideIndex, setSlideIndex] = useState(0);
   const touchStartX = useRef<number | null>(null);
   const touchDeltaX = useRef(0);
 
   useEffect(() => {
+    const el = sectionRef.current;
+    if (!el) return;
     const observer = new IntersectionObserver(
       ([entry]) => {
-        if (entry.isIntersecting && !hasAnimated) {
+        if (entry.isIntersecting) {
           setIsVisible(true);
-          setHasAnimated(true);
+          observer.disconnect();
         }
       },
       { threshold: 0.1 }
     );
-    if (sectionRef.current) observer.observe(sectionRef.current);
+    observer.observe(el);
     return () => observer.disconnect();
-  }, [hasAnimated]);
+  }, []);
 
   const content = CONTENT[activeTab];
   const images = content.images;
@@ -162,10 +175,8 @@ export default function UnitDetail() {
 
   const goToSlide = (idx: number) => {
     const total = images.length;
-    const next = ((idx % total) + total) % total; // wrap-around aman
-    setSlideIndex(next);
+    setSlideIndex(((idx % total) + total) % total);
   };
-
   const goPrev = () => goToSlide(slideIndex - 1);
   const goNext = () => goToSlide(slideIndex + 1);
 
@@ -173,330 +184,283 @@ export default function UnitDetail() {
     touchStartX.current = e.touches[0].clientX;
     touchDeltaX.current = 0;
   };
-
   const handleTouchMove = (e: React.TouchEvent) => {
     if (touchStartX.current === null) return;
     touchDeltaX.current = e.touches[0].clientX - touchStartX.current;
   };
-
   const handleTouchEnd = () => {
-    const threshold = 40; // px minimum swipe untuk dianggap geser
-    if (touchDeltaX.current > threshold) {
-      goPrev();
-    } else if (touchDeltaX.current < -threshold) {
-      goNext();
-    }
+    const threshold = 40;
+    if (touchDeltaX.current > threshold) goPrev();
+    else if (touchDeltaX.current < -threshold) goNext();
     touchStartX.current = null;
     touchDeltaX.current = 0;
   };
 
-  // Smooth-scroll ke section lain (mis. "location") tanpa reload
-  const handlePerkClick = (href?: string) => {
-    if (!href) return;
-    const target = document.querySelector(href);
-    if (target) {
-      target.scrollIntoView({ behavior: "smooth", block: "start" });
-    }
-  };
+  const show = isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8";
 
   return (
     <section
       id="explore"
       ref={sectionRef}
-      className="bg-white w-full overflow-hidden py-20 md:py-32"
+      className="w-full overflow-hidden bg-[#F7F3EA] py-16 md:py-28"
     >
-      <div className="max-w-[1400px] mx-auto px-4 md:px-8 lg:px-16">
-
-        {/* ── TOP LABEL + HEADING + TABS (CENTERED) ── */}
+      <div className="mx-auto max-w-[1320px] px-4 md:px-10 lg:px-16">
+        {/* ── HEADER + TABS (rata tengah di mobile, rata kiri di md+) ── */}
         <div
           className={cn(
-            "flex flex-col items-center text-center w-full max-w-3xl mx-auto mb-16 transition-all duration-1000 ease-out",
-            isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
+            "mb-10 text-center transition-all duration-1000 ease-out md:mb-14 md:text-left",
+            show
           )}
         >
-          {/* Badge Atas */}
-          <div className="inline-flex items-center gap-2 text-[#F26B1D] bg-[#F26B1D]/10 px-3.5 py-1.5 rounded-full mb-4 border border-[#F26B1D]/20">
-            <Sparkles size={12} className="animate-pulse" />
-            <span className="text-[10px] font-extrabold tracking-widest uppercase">Spesifikasi Unit</span>
+          <div className="mb-4 flex items-center justify-center gap-3 md:justify-start">
+            <span className="h-px w-10 bg-[#FF5C0B]" />
+            <span className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#1D363A]/70">
+              Spesifikasi Unit
+            </span>
+            <span className="h-px w-10 bg-[#FF5C0B] md:hidden" />
           </div>
-          
-          {/* Judul Utama */}
-          <h2 className="text-3xl md:text-5xl font-bold text-[#421E2C] tracking-tight leading-tight md:leading-none">
-            Setiap Detail <span className="text-[#F26B1D]">Dirancang untuk</span> Anda
+
+          <h2 className="text-3xl leading-[1.1] tracking-tight text-[#1D363A] sm:text-4xl md:text-5xl">
+            <span className="font-light">Mengenal</span>{" "}
+            <span className="font-extrabold text-[#FF5C0B]">Summit Type 75</span>
           </h2>
 
-          {/* Navigasi Segmented Pill Tabs */}
-          <div className="flex justify-center w-full mt-6">
-            <div className="flex items-center justify-center bg-[#F7F2EE] rounded-full p-1 border border-[#421E2C]/8 mx-auto">
-              {TABS.map((tab) => (
+          <div
+            role="tablist"
+            className="mt-8 flex gap-5 overflow-x-auto border-b border-[#1D363A]/15 [scrollbar-width:none] md:justify-start md:gap-7 [&::-webkit-scrollbar]:hidden"
+          >
+            {TABS.map((tab) => {
+              const active = activeTab === tab.id;
+              return (
                 <button
                   key={tab.id}
+                  type="button"
+                  role="tab"
+                  aria-selected={active}
                   onClick={() => setActiveTab(tab.id)}
                   className={cn(
-                    "px-5 py-2 text-xs font-bold tracking-wider uppercase rounded-full transition-all duration-300 cursor-pointer",
-                    activeTab === tab.id
-                      ? "bg-[#421E2C] text-white shadow-sm"
-                      : "text-[#421E2C]/50 hover:text-[#421E2C]"
+                    // first:ml-auto + last:mr-auto = tengah di mobile tanpa risiko terpotong
+                    "relative shrink-0 cursor-pointer whitespace-nowrap pb-3 text-[11px] uppercase tracking-[0.1em] transition-colors first:ml-auto last:mr-auto sm:text-xs sm:tracking-[0.16em] md:first:ml-0 md:last:mr-0",
+                    "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#FF5C0B]",
+                    active
+                      ? "font-bold text-[#1D363A]"
+                      : "font-medium text-[#1D363A]/45 hover:text-[#1D363A]"
                   )}
                 >
                   {tab.label}
+                  <span
+                    className={cn(
+                      "absolute inset-x-0 -bottom-px h-0.5 origin-left bg-[#FF5C0B] transition-transform duration-300",
+                      active ? "scale-x-100" : "scale-x-0"
+                    )}
+                  />
                 </button>
-              ))}
-            </div>
+              );
+            })}
           </div>
         </div>
 
-        {/* ── MAIN GRID: IMAGE LEFT + CONTENT RIGHT ── */}
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_1fr] gap-10 xl:gap-16 items-start">
-
-          {/* ── IMAGE PANEL ── */}
+        {/* ── MAIN GRID: CONTENT LEFT + GALLERY RIGHT ── */}
+        <div className="grid grid-cols-1 items-start gap-10 lg:grid-cols-12 lg:gap-14">
+          {/* CONTENT (min-w-0 mencegah kolom melebar melebihi layar) */}
           <div
             className={cn(
-              "relative transition-all duration-700 delay-100 ease-out",
-              isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
+              "order-2 min-w-0 transition-all delay-200 duration-700 ease-out lg:order-1 lg:col-span-5",
+              show
             )}
           >
-            {/* Main image / carousel */}
-            <div
-              className="relative h-[380px] md:h-[560px] w-full rounded-3xl overflow-hidden group/carousel"
-              onTouchStart={handleTouchStart}
-              onTouchMove={handleTouchMove}
-              onTouchEnd={handleTouchEnd}
-            >
-              {/* Slides track */}
-              <div
-                className="absolute inset-0 flex h-full transition-transform duration-500 ease-out"
-                style={{ transform: `translateX(-${slideIndex * 100}%)` }}
-              >
-                {images.map((src, i) => (
-                  <div key={src} className="relative h-full w-full shrink-0 basis-full">
-                    <Image
-                      src={src}
-                      alt={`${content.eyebrow} - foto ${i + 1}`}
-                      fill
-                      className="object-cover"
-                      priority={i === 0}
-                    />
-                  </div>
-                ))}
-              </div>
-
-              {/* gradient overlay */}
-              <div className="absolute inset-0 bg-gradient-to-t from-[#421E2C]/60 via-transparent to-transparent pointer-events-none" />
-
-              {/* Vertical rotated label — signature element */}
-              <div className="absolute top-6 left-0 -translate-x-0 z-10">
-                <div className="bg-[#F26B1D] px-3 py-2 rounded-r-xl">
-                  <span
-                    className="block text-[9px] font-black tracking-[0.3em] uppercase text-white"
-                    style={{ writingMode: "vertical-lr", letterSpacing: "0.3em" }}
-                  >
-                    {activeTab === "spec" ? "EXCLUSIVE" : "FASILITAS"}
-                  </span>
-                </div>
-              </div>
-
-              {/* Prev / Next arrows — hanya tampil jika lebih dari 1 foto */}
-              {images.length > 1 && (
-                <>
-                  <button
-                    type="button"
-                    onClick={goPrev}
-                    aria-label="Foto sebelumnya"
-                    className="absolute left-3 top-1/2 -translate-y-1/2 z-10 w-9 h-9 rounded-full bg-white/20 backdrop-blur-md border border-white/30 flex items-center justify-center text-white hover:bg-white/35 transition-colors duration-300 cursor-pointer"
-                  >
-                    <ChevronLeft size={18} />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={goNext}
-                    aria-label="Foto berikutnya"
-                    className="absolute right-3 top-1/2 -translate-y-1/2 z-10 w-9 h-9 rounded-full bg-white/20 backdrop-blur-md border border-white/30 flex items-center justify-center text-white hover:bg-white/35 transition-colors duration-300 cursor-pointer"
-                  >
-                    <ChevronRight size={18} />
-                  </button>
-                </>
-              )}
-
-              {/* Dots indicator */}
-              {images.length > 1 && (
-                <div className="absolute top-5 right-5 z-10 flex items-center gap-1.5">
-                  {images.map((_, i) => (
-                    <button
-                      key={i}
-                      type="button"
-                      onClick={() => goToSlide(i)}
-                      aria-label={`Ke foto ${i + 1}`}
-                      className={cn(
-                        "h-1.5 rounded-full transition-all duration-300 cursor-pointer",
-                        i === slideIndex
-                          ? "w-5 bg-[#F26B1D]"
-                          : "w-1.5 bg-white/50 hover:bg-white/80"
-                      )}
-                    />
-                  ))}
-                </div>
-              )}
-
-              {/* Bottom floating stat strip */}
-              <div className="absolute bottom-0 left-0 right-0 p-5 z-10">
-                <div className="flex gap-3">
-                  {[
-                    { val: "108", unit: "m²", label: "Luas Tanah" },
-                    { val: "255", unit: "m²", label: "Luas Bangunan" },
-                    { val: "10", unit: "KT", label: "Kamar Tidur" },
-                  ].map((s, i) => (
-                    <div
-                      key={i}
-                      className="flex-1 bg-white/15 backdrop-blur-md border border-white/20 rounded-2xl p-3 text-center"
-                    >
-                      <p className="text-white font-black text-lg leading-none">
-                        {s.val}
-                        <span className="text-[#F26B1D] text-xs ml-0.5">{s.unit}</span>
-                      </p>
-                      <p className="text-white/60 text-[9px] uppercase tracking-wider mt-1">
-                        {s.label}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            {/* Below image: perks strip */}
-            <div
-              className={cn(
-                "mt-4 grid grid-cols-2 gap-2.5 transition-all duration-700 delay-300 ease-out",
-                isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"
-              )}
-            >
-              {PERKS.map((p, i) => {
-                const isClickable = Boolean(p.href);
-                return (
-                  <div
-                    key={i}
-                    role={isClickable ? "button" : undefined}
-                    tabIndex={isClickable ? 0 : undefined}
-                    onClick={isClickable ? () => handlePerkClick(p.href) : undefined}
-                    onKeyDown={
-                      isClickable
-                        ? (e) => {
-                            if (e.key === "Enter" || e.key === " ") {
-                              e.preventDefault();
-                              handlePerkClick(p.href);
-                            }
-                          }
-                        : undefined
-                    }
-                    className={cn(
-                      "flex items-center gap-3 bg-[#FBF8F6] border border-[#421E2C]/8 rounded-2xl px-3.5 py-3 hover:border-[#F26B1D]/30 transition-colors duration-300 group",
-                      isClickable && "cursor-pointer"
-                    )}
-                  >
-                    <div className="shrink-0 w-7 h-7 rounded-xl bg-[#F26B1D]/10 flex items-center justify-center text-[#F26B1D] group-hover:bg-[#F26B1D] group-hover:text-white transition-colors duration-300">
-                      {p.icon}
-                    </div>
-                    <div className="min-w-0">
-                      <p
-                        className={cn(
-                          "text-[11px] font-bold text-[#421E2C] leading-tight truncate",
-                          isClickable && "group-hover:text-[#F26B1D] transition-colors duration-300"
-                        )}
-                      >
-                        {p.label}
-                      </p>
-                      <p className="text-[9px] text-zinc-400 leading-tight mt-0.5 truncate">
-                        {p.desc}
-                      </p>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* ── CONTENT PANEL ── */}
-          <div
-            className={cn(
-              "flex flex-col gap-8 transition-all duration-700 delay-200 ease-out",
-              isVisible ? "opacity-100 translate-x-0" : "opacity-0 translate-x-10"
-            )}
-          >
-            {/* Eyebrow + heading + body */}
-            <div>
-              <p className="text-[10px] font-black tracking-[0.25em] uppercase text-[#F26B1D] mb-2">
+            <div className="text-center lg:text-left">
+              <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.22em] text-[#FF5C0B]">
                 {content.eyebrow}
               </p>
-              <h3 className="text-2xl md:text-3xl font-bold text-[#421E2C] leading-snug whitespace-pre-line tracking-tight">
+              <h3 className="whitespace-pre-line text-xl font-bold leading-snug tracking-tight text-[#1D363A] sm:text-2xl md:text-3xl">
                 {content.heading}
               </h3>
-              <p className="text-sm text-zinc-400 font-light leading-relaxed mt-3 max-w-sm">
+              <p className="mx-auto mt-4 max-w-md text-sm font-light leading-relaxed text-[#1D363A]/70 md:text-base lg:mx-0">
                 {content.body}
               </p>
             </div>
 
-            {/* Spec rows — horizontal list style */}
-            <div className="divide-y divide-[#421E2C]/6">
-              {content.rows.map((row, idx) => (
-                <div
-                  key={idx}
-                  style={{
-                    transitionDelay: isVisible ? `${300 + idx * 70}ms` : "0ms",
-                  }}
-                  className={cn(
-                    "flex items-center justify-between py-4 group transition-all duration-500 ease-out",
-                    isVisible ? "opacity-100 translate-x-0" : "opacity-0 translate-x-6"
-                  )}
-                >
-                  {/* Label side */}
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-xl bg-[#421E2C]/5 flex items-center justify-center text-[#421E2C]/50 group-hover:bg-[#F26B1D] group-hover:text-white transition-all duration-300 shrink-0">
+            {content.variant === "cards" ? (
+              <div className="mt-8 grid grid-cols-2 gap-3">
+                {content.rows.map((row) => (
+                  <div
+                    key={`${activeTab}-${row.label}`}
+                    className="group rounded-2xl border border-[#1D363A]/10 bg-white p-4 transition-colors duration-300 hover:border-[#FF5C0B]/40"
+                  >
+                    <span className="mb-3 flex h-9 w-9 items-center justify-center rounded-full bg-[#1D363A]/5 text-[#1D363A] transition-colors duration-300 group-hover:bg-[#FF5C0B] group-hover:text-white">
                       {row.icon}
-                    </div>
-                    <span className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">
-                      {row.label}
                     </span>
+                    <p className="text-[11px] font-medium uppercase tracking-wider text-[#1D363A]/50">
+                      {row.label}
+                    </p>
+                    <p className="mt-1 text-sm font-bold leading-snug text-[#1D363A] md:text-base">
+                      {row.value}
+                    </p>
                   </div>
-                  {/* Value side */}
-                  <span className="text-sm font-bold text-[#421E2C] text-right max-w-[180px]">
-                    {row.value}
-                  </span>
-                </div>
-              ))}
-            </div>
-
-            {/* Divider */}
-            <div className="flex items-center gap-3">
-              <div className="flex-1 h-px bg-[#421E2C]/8" />
-              <span className="text-[9px] font-black tracking-[0.2em] uppercase text-[#421E2C]/30">
-                Keistimewaan
-              </span>
-              <div className="flex-1 h-px bg-[#421E2C]/8" />
-            </div>
-
-            {/* CTA strip + legal badge */}
-            <div className="space-y-3">
-              {/* Legal guarantee */}
-              <div className="flex items-start gap-3.5 p-4 rounded-2xl bg-[#421E2C]/[0.04] border border-[#421E2C]/8">
-                <ShieldCheck size={18} className="text-[#F26B1D] shrink-0 mt-0.5" />
-                <p className="text-xs text-[#421E2C]/70 leading-relaxed font-medium">
-                  Seluruh spesifikasi di atas terikat secara legal dalam{" "}
-                  <span className="text-[#421E2C] font-bold">MoU jual beli unit</span>{" "}
-                  — tidak ada biaya tersembunyi.
-                </p>
+                ))}
               </div>
+            ) : (
+              <dl className="mt-8 divide-y divide-[#1D363A]/10 border-y border-[#1D363A]/10">
+                {content.rows.map((row) => (
+                  <div
+                    key={`${activeTab}-${row.label}`}
+                    className="flex items-baseline justify-between gap-6 py-3"
+                  >
+                    <dt className="text-[11px] font-medium uppercase tracking-wider text-[#1D363A]/50">
+                      {row.label}
+                    </dt>
+                    <dd className="text-right text-sm font-bold text-[#1D363A]">
+                      {row.value}
+                    </dd>
+                  </div>
+                ))}
+              </dl>
+            )}
 
-              {/* CTA button */}
-              <button className="group w-full flex items-center justify-between bg-[#421E2C] hover:bg-[#5a2a3d] text-white rounded-2xl px-5 py-4 transition-all duration-300 cursor-pointer">
-                <span className="text-sm font-bold tracking-wide">
-                  Konsultasi & Info Harga
-                </span>
-                <span className="w-8 h-8 rounded-xl bg-[#F26B1D] flex items-center justify-center group-hover:translate-x-1 transition-transform duration-300">
-                  <ArrowRight size={15} />
-                </span>
-              </button>
-            </div>
+            <a
+              href={WA_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="group mt-8 flex items-center justify-between rounded-full bg-[#1D363A] py-2 pl-6 pr-2 text-[#F7F3EA] transition-colors duration-300 hover:bg-[#FF5C0B]"
+            >
+              <span className="text-sm font-semibold">Konsultasi & Info Harga</span>
+              <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#F7F3EA] text-[#1D363A] transition-transform duration-300 group-hover:translate-x-1">
+                <ArrowRight size={16} />
+              </span>
+            </a>
           </div>
+
+          {/* GALLERY */}
+          <div
+            className={cn(
+              "order-1 min-w-0 transition-all delay-100 duration-700 ease-out lg:order-2 lg:col-span-7",
+              show
+            )}
+          >
+            <div className="relative">
+              {/* offset outline frame */}
+              <div className="pointer-events-none absolute -bottom-3 -right-3 hidden h-full w-full rounded-[2rem] border border-[#FF5C0B]/50 md:block" />
+
+              <div
+                className="relative h-[320px] w-full overflow-hidden rounded-3xl sm:h-[440px] md:rounded-[2rem] lg:h-[520px]"
+                onTouchStart={handleTouchStart}
+                onTouchMove={handleTouchMove}
+                onTouchEnd={handleTouchEnd}
+              >
+                {/* slides track */}
+                <div
+                  className="absolute inset-0 flex h-full transition-transform duration-500 ease-out"
+                  style={{ transform: `translateX(-${slideIndex * 100}%)` }}
+                >
+                  {images.map((src, i) => (
+                    <div key={src} className="relative h-full w-full shrink-0 basis-full">
+                      <Image
+                        src={src}
+                        alt={`${content.eyebrow} - foto ${i + 1}`}
+                        fill
+                        sizes="(min-width: 1024px) 700px, 100vw"
+                        className="object-cover"
+                      />
+                    </div>
+                  ))}
+                </div>
+
+                <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#1D363A]/60 via-transparent to-transparent" />
+
+                {/* caption: disembunyikan di mobile supaya tidak menumpuk dengan kontrol */}
+                <div className="absolute bottom-4 left-4 z-10 hidden max-w-[50%] rounded-2xl bg-[#F7F3EA]/95 px-4 py-2.5 shadow-lg sm:block">
+                  <p className="truncate text-[11px] font-semibold uppercase tracking-[0.16em] text-[#1D363A]">
+                    {content.eyebrow}
+                  </p>
+                </div>
+
+                {/* counter + arrows: mobile = satu baris penuh (counter kiri, panah kanan) */}
+                <div className="absolute inset-x-3 bottom-3 z-10 flex items-center justify-between sm:inset-x-auto sm:bottom-4 sm:right-4 sm:justify-end sm:gap-2">
+                  <span className="rounded-full bg-[#1D363A]/70 px-3 py-1.5 text-[11px] font-medium tabular-nums text-[#F7F3EA] backdrop-blur-md">
+                    {String(slideIndex + 1).padStart(2, "0")} /{" "}
+                    {String(images.length).padStart(2, "0")}
+                  </span>
+                  {images.length > 1 && (
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={goPrev}
+                        aria-label="Foto sebelumnya"
+                        className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-full border border-white/30 bg-white/20 text-white backdrop-blur-md transition-colors duration-300 hover:bg-[#FF5C0B]"
+                      >
+                        <ChevronLeft size={18} />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={goNext}
+                        aria-label="Foto berikutnya"
+                        className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-full border border-white/30 bg-white/20 text-white backdrop-blur-md transition-colors duration-300 hover:bg-[#FF5C0B]"
+                      >
+                        <ChevronRight size={18} />
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* thumbnails */}
+            {images.length > 1 && (
+              <div className="mt-6 flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                {images.map((src, i) => (
+                  <button
+                    key={src}
+                    type="button"
+                    onClick={() => goToSlide(i)}
+                    aria-label={`Ke foto ${i + 1}`}
+                    className={cn(
+                      "relative h-14 w-20 shrink-0 cursor-pointer overflow-hidden rounded-xl border-2 transition-all duration-300",
+                      i === slideIndex
+                        ? "border-[#FF5C0B]"
+                        : "border-transparent opacity-60 hover:opacity-100"
+                    )}
+                  >
+                    <Image src={src} alt="" fill sizes="80px" className="object-cover" />
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* ── PERKS BAND ── */}
+        <div
+          className={cn(
+            "mt-14 grid grid-cols-1 gap-px overflow-hidden rounded-3xl bg-[#1D363A]/10 transition-all delay-300 duration-700 ease-out sm:grid-cols-2 lg:mt-20 lg:grid-cols-4",
+            show
+          )}
+        >
+          {PERKS.map((p) => {
+            const cls = "flex items-center gap-4 bg-white p-5 transition-colors duration-300";
+            const inner = (
+              <>
+                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#FF5C0B]/10 text-[#FF5C0B]">
+                  {p.icon}
+                </span>
+                <div className="min-w-0">
+                  <p className="text-sm font-bold leading-tight text-[#1D363A]">{p.label}</p>
+                  <p className="mt-1 text-[11px] font-light leading-snug text-[#1D363A]/60">
+                    {p.desc}
+                  </p>
+                </div>
+              </>
+            );
+            return p.href ? (
+              <a key={p.label} href={p.href} className={cn(cls, "hover:bg-[#F7F3EA]")}>
+                {inner}
+              </a>
+            ) : (
+              <div key={p.label} className={cls}>
+                {inner}
+              </div>
+            );
+          })}
         </div>
       </div>
     </section>

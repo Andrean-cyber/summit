@@ -2,79 +2,44 @@
 
 import { useEffect, useState, useRef } from "react";
 import { cn } from "@/lib/utils";
-import {
-  TrendingUp,
-  ShieldCheck,
-  ArrowRight,
-  BadgePercent,
-  CalendarDays,
-  Banknote,
-  Sparkles
-} from "lucide-react";
+import { ArrowRight, CalendarDays, Info } from "lucide-react";
+
+const WA_URL =
+  "https://wa.me/62816500340?text=Halo%2C%20saya%20ingin%20konsultasi%20simulasi%20pendapatan%20Summit%20Private%20Village.";
 
 /* ─────────────────────────────────────────────
-   DATA — dari brosur Core Stay (foto referensi)
+   DATA — dari halaman "Profit Investment" PDF Summit
 ───────────────────────────────────────────── */
-const TIERS = [
-  {
-    label: "Low Season",
-    months: 2,
-    monthlyIncome: 26_720_000,
-    total: 53_440_000,
-    color: "#C9A882",
-    barW: "20%",
-  },
-  {
-    label: "Shoulder Season",
-    months: 3,
-    monthlyIncome: 33_400_000,
-    total: 100_200_000,
-    color: "#B07040",
-    barW: "40%",
-  },
-  {
-    label: "High Season",
-    months: 4,
-    monthlyIncome: 46_760_000,
-    total: 187_040_000,
-    color: "#E67A40",
-    barW: "65%",
-  },
-  {
-    label: "Peak Season",
-    months: 3,
-    monthlyIncome: 60_120_000,
-    total: 180_360_000,
-    color: "#F26B1D",
-    barW: "100%",
-  },
-];
+const STREAMS = [
+  { label: "Week Day", range: "Senin – Kamis", rate: 800_000, days: 10, color: "#FF5C0B" },
+  { label: "Week End", range: "Jumat – Sabtu", rate: 1_300_000, days: 6, color: "#F7F3EA" },
+  { label: "Minggu", range: "Hari Minggu", rate: 600_000, days: 2, color: "#E9C46A" },
+].map((s) => ({ ...s, subtotal: s.rate * s.days }));
 
-const NETT_PROFIT = 521_040_000;
+const MONTHLY = STREAMS.reduce((sum, s) => sum + s.subtotal, 0); // 17.000.000
+const YEARLY = MONTHLY * 12; // 204.000.000
+const TOTAL_DAYS = STREAMS.reduce((sum, s) => sum + s.days, 0); // 18
 
-const fmt = (n: number) =>
-  "Rp " +
-  n
-    .toLocaleString("id-ID")
-    .replace(/\./g, ".")
-    .replace(",", ".");
+const fmtNum = (n: number) => n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+const fmt = (n: number) => `Rp ${fmtNum(n)}`;
 
 /* ─────────────────────────────────────────────
    COUNTER HOOK
 ───────────────────────────────────────────── */
-function useCountUp(target: number, active: boolean, duration = 1600) {
+function useCountUp(target: number, active: boolean, duration = 1800) {
   const [val, setVal] = useState(0);
   useEffect(() => {
     if (!active) return;
     let start: number | null = null;
+    let raf = 0;
     const step = (ts: number) => {
-      if (!start) start = ts;
+      if (start === null) start = ts;
       const progress = Math.min((ts - start) / duration, 1);
       const ease = 1 - Math.pow(1 - progress, 3);
       setVal(Math.round(target * ease));
-      if (progress < 1) requestAnimationFrame(step);
+      if (progress < 1) raf = requestAnimationFrame(step);
     };
-    const raf = requestAnimationFrame(step);
+    raf = requestAnimationFrame(step);
     return () => cancelAnimationFrame(raf);
   }, [active, target, duration]);
   return val;
@@ -89,306 +54,206 @@ export default function PassiveIncome() {
   const sectionRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
+    const el = sectionRef.current;
+    if (!el) return;
+    let timer: ReturnType<typeof setTimeout>;
     const obs = new IntersectionObserver(
       ([e]) => {
         if (e.isIntersecting) {
           setIsVisible(true);
-          setTimeout(() => setBarsIn(true), 300);
+          timer = setTimeout(() => setBarsIn(true), 300);
           obs.disconnect();
         }
       },
       { threshold: 0.1 }
     );
-    if (sectionRef.current) obs.observe(sectionRef.current);
-    return () => obs.disconnect();
+    obs.observe(el);
+    return () => {
+      obs.disconnect();
+      clearTimeout(timer);
+    };
   }, []);
 
-  const displayProfit = useCountUp(NETT_PROFIT, isVisible, 2000);
+  const yearly = useCountUp(YEARLY, isVisible, 2000);
+  const show = isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8";
 
   return (
     <section
       ref={sectionRef}
       id="investasi"
-      className="bg-white w-full overflow-hidden py-20 md:py-32"
+      className="relative w-full overflow-hidden bg-[#1D363A] py-16 text-[#F7F3EA] md:py-28"
     >
-      <div className="max-w-[1400px] mx-auto px-4 md:px-8 lg:px-16">
+      {/* dotted texture */}
+      <div className="pointer-events-none absolute inset-0 opacity-[0.04] [background-image:radial-gradient(#F7F3EA_1px,transparent_1px)] [background-size:26px_26px]" />
 
+      <div className="relative mx-auto max-w-[1320px] px-4 md:px-10 lg:px-16">
         {/* ── HEADER ── */}
-        <div className={cn(
-          "mb-16 text-center transition-all duration-1000 ease-out",
-          isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"
-        )}>
-          <div className="inline-flex items-center gap-2 text-[#F26B1D] bg-[#F26B1D]/10 px-3.5 py-1.5 rounded-full mb-4 border border-[#F26B1D]/20">
-            <Sparkles size={12} className="animate-pulse" />
-            <span className="text-[10px] font-extrabold tracking-widest uppercase">PROFIT INVESTMENT</span>
+        <div className={cn("mb-12 max-w-2xl transition-all duration-1000 ease-out md:mb-16", show)}>
+          <div className="mb-4 flex items-center gap-3">
+            <span className="h-px w-10 bg-[#FF5C0B]" />
+            <span className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#F7F3EA]/70">
+              Profit Investment
+            </span>
           </div>
-          <h2 className="text-3xl md:text-5xl font-bold text-[#421E2C] tracking-tight leading-none">
-            Biarkan properti Anda <span className="text-[#F26B1D]">Bekerja</span> Untuk Anda
+          <h2 className="text-3xl leading-[1.1] tracking-tight sm:text-4xl md:text-5xl">
+            <span className="font-light">Potensi</span>{" "}
+            <span className="font-extrabold text-[#FF5C0B]">pendapatan</span>{" "}
+            <span className="font-light">unit Summit</span>
           </h2>
-          <p className="text-zinc-500 font-light text-sm max-w-xl mx-auto mt-4 leading-relaxed">
-            Simulasi pendapatan tahunan Cluster Guest House— dihitung transparan per tier musim.
+          <p className="mt-4 text-sm font-light leading-relaxed text-[#F7F3EA]/70 md:text-base">
+            Simulasi potensi pendapatan berdasarkan tarif harian dan jumlah hari terisi dalam satu
+            bulan.
           </p>
         </div>
 
-        
-
-        {/* ── MAIN GRID ── */}
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_420px] gap-10 xl:gap-16 items-start">
-
-          {/* ── LEFT: TIER BREAKDOWN ── */}
-          <div
-            className={cn(
-              "space-y-4 transition-all duration-700 delay-100 ease-out",
-              isVisible ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-8"
-            )}
-          >
-            {/* Column labels */}
-            <div className="flex items-center justify-between px-1 mb-2">
-              <span className="text-[9px] font-black tracking-[0.2em] uppercase text-zinc-300">
-                Tier Musim
-              </span>
-              <div className="flex gap-8 md:gap-14">
-                <span className="text-[9px] font-black tracking-[0.2em] uppercase text-zinc-300">
-                  / Bulan
-                </span>
-                <span className="text-[9px] font-black tracking-[0.2em] uppercase text-zinc-300 hidden sm:block">
-                  Total
-                </span>
+        <div className="grid grid-cols-1 items-start gap-10 lg:grid-cols-12 lg:gap-14">
+          {/* ── LEFT: BREAKDOWN ── */}
+          <div className="min-w-0 space-y-4 lg:col-span-7">
+            {/* stacked share bar */}
+            <div className={cn("transition-all delay-100 duration-700 ease-out", show)}>
+              <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.22em] text-[#F7F3EA]/55">
+                Komposisi pendapatan per bulan
+              </p>
+              <div className="flex h-3 w-full gap-1 overflow-hidden rounded-full">
+                {STREAMS.map((s, i) => (
+                  <div
+                    key={s.label}
+                    className="h-full rounded-full transition-all duration-[1200ms] ease-out"
+                    style={{
+                      width: barsIn ? `${(s.subtotal / MONTHLY) * 100}%` : "0%",
+                      transitionDelay: `${i * 150}ms`,
+                      backgroundColor: s.color,
+                    }}
+                  />
+                ))}
               </div>
             </div>
 
-            {/* Tier rows */}
-            {TIERS.map((tier, idx) => (
-              <div
-                key={idx}
-                style={{ transitionDelay: isVisible ? `${150 + idx * 100}ms` : "0ms" }}
-                className={cn(
-                  "group relative bg-white border border-[#421E2C]/8 rounded-2xl overflow-hidden",
-                  "hover:border-[#F26B1D]/30 hover:shadow-md transition-all duration-400 ease-out",
-                  isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"
-                )}
-              >
-                {/* Animated progress fill behind the row */}
+            {/* stream cards */}
+            {STREAMS.map((s, idx) => {
+              const pct = Math.round((s.subtotal / MONTHLY) * 100);
+              return (
                 <div
-                  className="absolute inset-y-0 left-0 rounded-2xl transition-all duration-[1200ms] ease-out opacity-[0.06]"
-                  style={{
-                    width: barsIn ? tier.barW : "0%",
-                    transitionDelay: `${200 + idx * 150}ms`,
-                    backgroundColor: tier.color,
-                  }}
-                />
-
-                <div className="relative flex items-center justify-between px-5 py-4 gap-4">
-                  {/* Left: color dot + label + duration */}
-                  <div className="flex items-center gap-3.5 min-w-0">
-                    <div
-                      className="w-3 h-3 rounded-full shrink-0 transition-transform duration-300 group-hover:scale-110"
-                      style={{ backgroundColor: tier.color }}
-                    />
-                    <div className="min-w-0">
-                      <p className="text-sm font-bold text-[#421E2C] leading-tight">
-                        {tier.label}
-                      </p>
-                      <div className="flex items-center gap-1.5 mt-0.5">
-                        <CalendarDays size={10} className="text-zinc-300" />
-                        <span className="text-[10px] text-zinc-400 font-medium">
-                          {tier.months} bulan
-                        </span>
+                  key={s.label}
+                  style={{ transitionDelay: isVisible ? `${150 + idx * 100}ms` : "0ms" }}
+                  className={cn(
+                    "rounded-2xl border border-[#F7F3EA]/10 bg-[#F7F3EA]/[0.04] p-5 transition-all duration-700 ease-out hover:border-[#FF5C0B]/40",
+                    show
+                  )}
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex items-center gap-3.5">
+                      <span
+                        className="h-3 w-3 shrink-0 rounded-full"
+                        style={{ backgroundColor: s.color }}
+                      />
+                      <div>
+                        <p className="text-base font-bold leading-tight">{s.label}</p>
+                        <p className="mt-0.5 text-[11px] font-light text-[#F7F3EA]/60">
+                          {s.range}
+                        </p>
                       </div>
                     </div>
-                  </div>
-
-                  {/* Right: monthly + total */}
-                  <div className="flex items-center gap-6 md:gap-14 shrink-0">
                     <div className="text-right">
-                      <p className="text-sm font-bold text-[#421E2C]">
-                        {fmt(tier.monthlyIncome)}
-                      </p>
-                      <p className="text-[9px] text-zinc-300 uppercase tracking-wider mt-0.5">
-                        per bulan
-                      </p>
-                    </div>
-                    <div className="text-right hidden sm:block">
                       <p
-                        className="text-sm font-black"
-                        style={{ color: tier.color }}
+                        className="text-base font-extrabold tabular-nums md:text-lg"
+                        style={{ color: s.color }}
                       >
-                        {fmt(tier.total)}
+                        {fmt(s.subtotal)}
                       </p>
-                      <p className="text-[9px] text-zinc-300 uppercase tracking-wider mt-0.5">
-                        subtotal
+                      <p className="mt-0.5 text-[11px] font-light text-[#F7F3EA]/60">
+                        {pct}% dari total bulanan
                       </p>
                     </div>
+                  </div>
+                  <div className="mt-4 flex items-center gap-1.5 border-t border-[#F7F3EA]/10 pt-3 text-xs font-light text-[#F7F3EA]/70">
+                    <CalendarDays size={12} />
+                    <span>
+                      {fmt(s.rate)} × {s.days} hari
+                    </span>
                   </div>
                 </div>
+              );
+            })}
 
-                {/* Bottom thin bar */}
-                <div
-                  className="h-[3px] transition-all duration-[1200ms] ease-out"
-                  style={{
-                    width: barsIn ? tier.barW : "0%",
-                    transitionDelay: `${200 + idx * 150}ms`,
-                    backgroundColor: tier.color,
-                  }}
-                />
-              </div>
-            ))}
-
-            {/* NETT PROFIT total row */}
+            {/* monthly total */}
             <div
-              style={{ transitionDelay: isVisible ? "650ms" : "0ms" }}
+              style={{ transitionDelay: isVisible ? "500ms" : "0ms" }}
               className={cn(
-                "flex items-center justify-between bg-[#421E2C] rounded-2xl px-5 py-5 transition-all duration-700 ease-out",
-                isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"
+                "flex items-center justify-between gap-4 rounded-2xl bg-[#FF5C0B] px-5 py-5 text-[#1D363A] transition-all duration-700 ease-out",
+                show
               )}
             >
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-[#F26B1D] flex items-center justify-center shrink-0">
-                  <Banknote size={16} className="text-white" />
-                </div>
-                <div>
-                  <p className="text-[10px] font-black tracking-[0.2em] uppercase text-white/40">
-                    Profit / Tahun
-                  </p>
-                  <p className="text-[11px] text-white/60 font-light mt-0.5">
-                    Akumulasi 12 Bulan — Semua Tier
-                  </p>
-                </div>
-              </div>
-              <div className="text-right">
-                <p className="text-xl md:text-2xl font-black text-white tabular-nums">
-                  Rp{" "}
-                  <span className="text-[#F26B1D]">
-                    {displayProfit.toLocaleString("id-ID")}
-                  </span>
-                </p>
-              </div>
+              <p className="text-[11px] font-bold uppercase tracking-[0.2em]">
+                Potensi pendapatan per bulan
+              </p>
+              <p className="shrink-0 text-xl font-extrabold tabular-nums md:text-2xl">
+                {fmt(MONTHLY)}
+              </p>
             </div>
 
-            {/* Disclaimer */}
-            <p className="text-[10px] text-zinc-300 leading-relaxed px-1 pt-1">
-              * Simulasi berbasis skema okupansi brosur resmi Core Stay. Capital gain tahunan belum
-              termasuk dalam proyeksi ini.
+            {/* disclaimer */}
+            <p className="flex items-start gap-2 px-1 pt-1 text-[11px] font-light leading-relaxed text-[#F7F3EA]/55">
+              <Info size={13} className="mt-0.5 shrink-0" />
+              <span>
+                Potensi pendapatan dihitung dari tarif dan jumlah hari terisi yang tercantum pada
+                brosur Summit Private Village. Angka bersifat estimasi, bukan jaminan, dan dapat
+                berbeda pada kondisi sebenarnya.
+              </span>
             </p>
           </div>
 
-          {/* ── RIGHT: STAT CARDS ── */}
+          {/* ── RIGHT: YEARLY CARD ── */}
           <div
+            style={{ transitionDelay: isVisible ? "200ms" : "0ms" }}
             className={cn(
-              "flex flex-col gap-4 transition-all duration-700 delay-200 ease-out",
-              isVisible ? "opacity-100 translate-x-0" : "opacity-0 translate-x-8"
+              "min-w-0 transition-all duration-700 ease-out lg:col-span-5 lg:sticky lg:top-24",
+              show
             )}
           >
-            {/* Big highlight card */}
-            <div className="bg-[#421E2C] rounded-3xl p-6 md:p-8 relative overflow-hidden">
-              {/* Background texture rings */}
-              <div className="absolute -right-12 -top-12 w-44 h-44 rounded-full border border-white/5" />
-              <div className="absolute -right-6 -top-6 w-28 h-28 rounded-full border border-white/5" />
+            <div className="relative overflow-hidden rounded-3xl bg-[#F7F3EA] p-7 text-[#1D363A] md:p-9">
+              <div className="pointer-events-none absolute -right-14 -top-14 h-44 w-44 rounded-full bg-[#FF5C0B]/15" />
+              <div className="pointer-events-none absolute -right-6 -top-6 h-28 w-28 rounded-full border border-[#1D363A]/10" />
 
-              <p className="text-[10px] font-black tracking-[0.25em] uppercase text-[#F26B1D] mb-1">
-                Potensi Keuntungan
+              <p className="relative text-[11px] font-bold uppercase tracking-[0.22em] text-[#FF5C0B]">
+                Potensi pendapatan / tahun
               </p>
-              <p className="text-[10px] text-white/40 font-light mb-6">
-                Per Tahun — Type Medium 3 Room
+              <p className="relative mt-3 text-3xl leading-none tracking-tight tabular-nums sm:text-4xl xl:text-5xl">
+                <span className="font-light">Rp</span>{" "}
+                <span className="font-extrabold text-[#FF5C0B]">{fmtNum(yearly)}</span>
+              </p>
+              <p className="relative mt-3 text-sm font-light text-[#1D363A]/70">
+                {fmt(MONTHLY)} per bulan × 12 bulan
               </p>
 
-              <div className="space-y-1 mb-6">
-                <p className="text-3xl md:text-4xl font-black text-white tabular-nums leading-none">
-                  Rp{" "}
-                  <span className="text-[#F26B1D]">
-                    {displayProfit.toLocaleString("id-ID")}
-                  </span>
-                </p>
-                <p className="text-xs text-white/30 font-light">
-                  ≈{" "}
-                  <span className="text-white/60 font-medium">
-                    Rp {Math.round(NETT_PROFIT / 12).toLocaleString("id-ID")} / bulan
-                  </span>{" "}
-                  rata-rata
-                </p>
-              </div>
-
-              <div className="flex items-center gap-2 text-white/50 text-[10px] font-medium">
-                <TrendingUp size={12} className="text-[#F26B1D]" />
-                Proyeksi moderat & terukur
-              </div>
-            </div>
-
-            {/* Stat pills */}
-            {[
-              {
-                icon: <CalendarDays size={15} />,
-                label: "Total Bulan Aktif",
-                value: "12 Bulan",
-                sub: "Low → Peak Season",
-              },
-              {
-                icon: <BadgePercent size={15} />,
-                label: "ROI Estimasi",
-                value: "~18–22%",
-                sub: "Dari harga beli unit",
-              },
-              {
-                icon: <TrendingUp size={15} />,
-                label: "Peak Monthly Income",
-                value: "Rp 60.120.000",
-                sub: "3 bulan peak season",
-              },
-            ].map((stat, i) => (
-              <div
-                key={i}
-                style={{ transitionDelay: isVisible ? `${400 + i * 80}ms` : "0ms" }}
-                className={cn(
-                  "flex items-center gap-4 bg-white border border-[#421E2C]/8 rounded-2xl px-5 py-4",
-                  "hover:border-[#F26B1D]/25 hover:shadow-sm transition-all duration-300 group",
-                  isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
-                )}
-              >
-                <div className="w-9 h-9 rounded-xl bg-[#F26B1D]/8 flex items-center justify-center text-[#F26B1D] shrink-0 group-hover:bg-[#F26B1D] group-hover:text-white transition-all duration-300">
-                  {stat.icon}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-[9px] font-black tracking-[0.15em] uppercase text-zinc-300">
-                    {stat.label}
+              <div className="relative mt-7 grid grid-cols-2 gap-3">
+                <div className="rounded-2xl border border-[#1D363A]/10 bg-white p-4">
+                  <p className="text-2xl font-extrabold leading-none">{TOTAL_DAYS} hari</p>
+                  <p className="mt-2 text-[11px] font-medium uppercase tracking-wider text-[#1D363A]/55">
+                    Terisi per bulan
                   </p>
-                  <p className="text-sm font-bold text-[#421E2C] mt-0.5">{stat.value}</p>
-                  <p className="text-[10px] text-zinc-400 font-light">{stat.sub}</p>
+                </div>
+                <div className="rounded-2xl border border-[#1D363A]/10 bg-white p-4">
+                  <p className="text-2xl font-extrabold leading-none">{STREAMS.length} tarif</p>
+                  <p className="mt-2 text-[11px] font-medium uppercase tracking-wider text-[#1D363A]/55">
+                    Week day, week end, Minggu
+                  </p>
                 </div>
               </div>
-            ))}
 
-            {/* Legal badge */}
-            <div
-              style={{ transitionDelay: isVisible ? "700ms" : "0ms" }}
-              className={cn(
-                "flex items-start gap-3.5 p-4 rounded-2xl bg-[#FBF8F6] border border-[#421E2C]/8 transition-all duration-700 ease-out",
-                isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
-              )}
-            >
-              <ShieldCheck size={16} className="text-[#F26B1D] shrink-0 mt-0.5" />
-              <p className="text-[10px] text-[#421E2C]/60 leading-relaxed font-medium">
-                Simulasi dihitung berdasarkan skema okupansi berkala resmi dari brosur{" "}
-                <span className="text-[#421E2C] font-bold">Core Stay Cluster Guest House</span>.
-              </p>
+              <a
+                href={WA_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group relative mt-7 flex items-center justify-between rounded-full bg-[#1D363A] py-2 pl-6 pr-2 text-[#F7F3EA] transition-colors duration-300 hover:bg-[#FF5C0B]"
+              >
+                <span className="text-sm font-semibold">Konsultasi Simulasi Pendapatan</span>
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#F7F3EA] text-[#1D363A] transition-transform duration-300 group-hover:translate-x-1">
+                  <ArrowRight size={16} />
+                </span>
+              </a>
             </div>
-
-            {/* CTA */}
-            <button
-              style={{ transitionDelay: isVisible ? "800ms" : "0ms" }}
-              className={cn(
-                "group flex items-center justify-between bg-[#F26B1D] hover:bg-[#d85e17] text-white rounded-2xl px-5 py-4 transition-all duration-300 cursor-pointer",
-                isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
-              )}
-            >
-              <span className="text-sm font-bold tracking-wide">
-                Hitung ROI Saya Sekarang
-              </span>
-              <span className="w-8 h-8 rounded-xl bg-white/20 flex items-center justify-center group-hover:translate-x-1 transition-transform duration-300">
-                <ArrowRight size={15} />
-              </span>
-            </button>
           </div>
-
         </div>
       </div>
     </section>
