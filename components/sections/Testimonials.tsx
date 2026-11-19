@@ -32,7 +32,7 @@ const testimonials = [
     author: "Budi Santoso",
     title: "Pembeli unit",
     origin: "Surabaya",
-    avatar: "/psn1.jfif",
+    avatar: "/psn1.webp",
   },
   {
     quote:
@@ -40,7 +40,7 @@ const testimonials = [
     author: "dr. Rina Kusumawati",
     title: "Pembeli unit",
     origin: "Sidoarjo",
-    avatar: "/dokter.jfif",
+    avatar: "/dokter.webp",
   },
   {
     quote:
@@ -48,7 +48,7 @@ const testimonials = [
     author: "Andi Prasetyo",
     title: "Calon pembeli",
     origin: "Jakarta",
-    avatar: "/psn2.jfif",
+    avatar: "/psn2.webp",
   },
 ];
 

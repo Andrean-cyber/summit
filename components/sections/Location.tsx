@@ -28,13 +28,13 @@ type Place = {
 // Waktu tempuh diambil dari PDF Summit (urut dari terdekat).
 // Foto masih foto Corestay, ganti manual di folder /public.
 const places: Place[] = [
-  { name: "UIN Maulana Malik Ibrahim, Kampus 3", minutes: 3, group: "Pendidikan", image: "/uin.jfif" },
-  { name: "Ar-Rohmah Putri Islamic Boarding School", minutes: 3, group: "Pendidikan", image: "/arohmahI.jfif" },
-  { name: "Ar-Rohmah Putra Islamic Boarding School", minutes: 3, group: "Pendidikan", image: "/arohmahA.jfif" },
-  { name: "Thursina International Islamic Boarding School", minutes: 4, group: "Pendidikan", image: "/thursinah.jfif" },
-  { name: "Taman Rekreasi Sengkaling", minutes: 4, group: "Wisata", image: "/sengkaling.jfif" },
-  { name: "UMM Malang", minutes: 5, group: "Pendidikan", image: "/umm.jfif" },
-  { name: "Jatim Park 3", minutes: 10, group: "Wisata", image: "/jatimpark3.jfif" },
+  { name: "UIN Maulana Malik Ibrahim, Kampus 3", minutes: 3, group: "Pendidikan", image: "/uin.webp" },
+  { name: "Ar-Rohmah Putri Islamic Boarding School", minutes: 3, group: "Pendidikan", image: "/arohmahI.webp" },
+  { name: "Ar-Rohmah Putra Islamic Boarding School", minutes: 3, group: "Pendidikan", image: "/arohmahA.webp" },
+  { name: "Thursina International Islamic Boarding School", minutes: 4, group: "Pendidikan", image: "/thursinah.webp" },
+  { name: "Taman Rekreasi Sengkaling", minutes: 4, group: "Wisata", image: "/sengkaling.webp" },
+  { name: "UMM Malang", minutes: 5, group: "Pendidikan", image: "/umm.webp" },
+  { name: "Jatim Park 3", minutes: 10, group: "Wisata", image: "/jatimpark3.webp" },
 ];
 
 const facts = [
